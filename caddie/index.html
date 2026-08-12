@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Caddie">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex, nofollow">
+<title>Olsen Caddie</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%23000000'/%3E%3Ccircle cx='90' cy='62' r='26' fill='%23EA0000'/%3E%3Crect x='84' y='84' width='12' height='60' rx='6' fill='%23ffffff'/%3E%3Crect x='52' y='140' width='76' height='12' rx='6' fill='%23ffffff'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#0a0a0a;color:#fff;
+ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Segoe UI,Roboto,sans-serif;-webkit-text-size-adjust:100%;
+ overscroll-behavior-y:none}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+input{font-family:inherit}
+h1,h2,h3,.club,.num,.tabb,.big{font-family:"Avenir Next Condensed","HelveticaNeue-CondensedBold","Helvetica Neue",-apple-system,sans-serif;
+ text-transform:uppercase;font-weight:800;letter-spacing:.01em}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px 130px}
+.tiny{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a;font-weight:800}
+.muted{color:#8a8a8a}
+.top{position:sticky;top:0;z-index:20;background:rgba(10,10,10,.95);backdrop-filter:blur(12px);
+ border-bottom:2px solid #ea0000;padding:calc(env(safe-area-inset-top) + 12px) 16px 12px}
+.toprow{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.toprow h1{margin:0;font-size:20px}
+.toprow .r{margin-left:auto;font-size:12px;color:#8a8a8a;font-weight:700;text-align:right;line-height:1.3}
+
+/* number display + pad */
+.numbox{text-align:center;padding:18px 0 6px}
+.numbox .lab{font-size:12px;letter-spacing:.14em;color:#8a8a8a;font-weight:800}
+.numbox .val{font-size:82px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;
+ font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif}
+.numbox .val span{font-size:26px;color:#8a8a8a;margin-left:6px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.pad button{padding:20px 0;border-radius:14px;background:#141414;border:1px solid #262626;font-size:26px;font-weight:700;
+ font-variant-numeric:tabular-nums}
+.pad button:active{background:#1e1e1e}
+.pad button.act{color:#ea0000;font-size:20px}
+
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{flex:1;min-width:64px;padding:13px 6px;border-radius:12px;background:#141414;border:1px solid #262626;
+ font-size:15px;font-weight:700;text-align:center}
+.chip.on{background:#ea0000;border-color:#ea0000}
+.chip small{display:block;font-size:11px;font-weight:600;opacity:.75;margin-top:2px}
+.stepper{display:flex;gap:8px;align-items:stretch;margin-top:10px}
+.stepper button{flex:0 0 62px;background:#141414;border:1px solid #262626;border-radius:12px;font-size:26px;font-weight:300}
+.stepper .v{flex:1;background:#141414;border:1px solid #262626;border-radius:12px;text-align:center;padding:13px 4px;
+ font-size:19px;font-weight:700}
+.stepper .v small{display:block;font-size:11px;color:#8a8a8a;font-weight:700;letter-spacing:.1em}
+
+/* answer */
+.ans{margin-top:18px;background:#141414;border:1px solid #262626;border-radius:18px;overflow:hidden}
+.ans .head{padding:16px 18px;border-bottom:1px solid #262626;display:flex;align-items:baseline;gap:10px}
+.ans .head .pl{font-size:13px;color:#8a8a8a;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.ans .head .plv{margin-left:auto;font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;
+ font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif}
+.ans .body{padding:20px 18px}
+.club{font-size:52px;line-height:1;color:#ea0000}
+.sub{margin-top:8px;font-size:16px;color:#d6d6d6}
+.alts{display:flex;gap:10px;margin-top:16px}
+.alt{flex:1;background:#0a0a0a;border:1px solid #262626;border-radius:12px;padding:12px;text-align:center}
+.alt b{display:block;font-size:19px}
+.alt span{font-size:12px;color:#8a8a8a}
+.note{margin-top:16px;padding:14px 16px;background:rgba(234,0,0,.07);border-left:3px solid #ea0000;border-radius:0 10px 10px 0;
+ font-size:16px;line-height:1.45;color:#d6d6d6}
+.note b{color:#fff}
+.warn{background:rgba(255,255,255,.05);border-left-color:#8a8a8a}
+
+/* clubs */
+.crow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1c1c1c}
+.crow .n{font-size:17px;font-weight:700;flex:1}
+.crow input{width:86px;background:#141414;border:1px solid #262626;border-radius:10px;color:#fff;font-size:19px;
+ text-align:center;padding:11px 4px;font-weight:700}
+.crow .u{font-size:13px;color:#8a8a8a;width:26px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:15px}
+th{font-size:11px;letter-spacing:.1em;color:#8a8a8a;text-align:right;padding:8px 4px;text-transform:uppercase}
+th:first-child{text-align:left}
+td{padding:11px 4px;border-top:1px solid #1c1c1c;text-align:right;font-variant-numeric:tabular-nums}
+td:first-child{text-align:left;font-weight:700}
+ol{padding-left:20px;line-height:1.7;font-size:16px;color:#d6d6d6}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.kpi div{flex:1;min-width:120px;background:#141414;border:1px solid #262626;border-radius:14px;padding:14px}
+.kpi b{display:block;font-size:22px;font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif}
+.kpi span{font-size:12px;color:#8a8a8a;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(10,10,10,.97);backdrop-filter:blur(12px);
+ border-top:1px solid #262626;padding:8px 12px calc(env(safe-area-inset-bottom) + 8px)}
+.tabrow{max-width:560px;margin:0 auto;display:flex;gap:8px}
+.tabb{flex:1;padding:14px 0;border-radius:14px;font-size:14px;text-align:center;color:#8a8a8a}
+.tabb.on{background:#ea0000;color:#fff}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ================= PLAYER PROFILE (from Arccos + coaching notes) ================= */
+var DEF={
+ clubs:[["Driver",276],["3 Wood",245],["5 Wood",228],["4 Iron",210],["5 Iron",197],["6 Iron",185],["7 Iron",172],
+        ["8 Iron",159],["9 Iron",146],["PW",133],["GW",120],["SW",105],["LW",88]],
+ disp:{"Driver":41,"3 Wood":34,"5 Wood":30,"4 Iron":26,"5 Iron":24,"6 Iron":22,"7 Iron":20,"8 Iron":18,"9 Iron":17,
+       "PW":15,"GW":14,"SW":12,"LW":10}
+};
+var RULES=[
+ "Widest part of the fairway. 275 in play beats 300 in trouble.",
+ "No hero shots. Take the medicine, make bogey the worst score.",
+ "125 to 175 is the scoring gap. Center of green until it is proven.",
+ "Never short side yourself. Doubles live on the short side.",
+ "Enough club. Most misses are short, especially into wind.",
+ "Long putts are two putts. Lag it, tap it, walk."
+];
+var KPI=[["<35 yd","Driver dispersion"],["<0.5","Penalty drives / round"],["70%","Playable drives"],["12+","Greens in regulation"]];
+
+/* ================= STORAGE ================= */
+var KEY="caddie-v1",mem={};
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return mem}}
+function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){mem=o}}
+var DB=load();
+if(!DB.clubs){DB.clubs={};DEF.clubs.forEach(function(c){DB.clubs[c[0]]=c[1]});save(DB)}
+if(DB.temp===undefined){DB.temp=90}
+
+/* ================= STATE ================= */
+var S={tab:"shot",yds:"",wind:0,wdir:"none",elev:0,lie:"fairway",pin:"center",
+       hole:"",trouble:"none",width:"normal"};
+var app=document.getElementById("app");
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function clubList(){var a=[];DEF.clubs.forEach(function(c){var v=parseFloat(DB.clubs[c[0]]);if(!isNaN(v)&&v>0)a.push([c[0],v])});
+ a.sort(function(x,y){return y[1]-x[1]});return a}
+function dispOf(n){return DEF.disp[n]||20}
+
+/* ================= MATH ================= */
+function playsLike(){
+ var d=parseFloat(S.yds);if(isNaN(d)||d<=0)return null;
+ var p=d, notes=[];
+ // elevation: a yard is a yard
+ p+=S.elev;
+ // wind: hurts more than it helps, scaled to shot length
+ var f=d/150;
+ if(S.wdir==="into"){p+=S.wind*f*1.2}
+ else if(S.wdir==="down"){p-=S.wind*f*0.6}
+ // temperature: ball flies further in Texas heat
+ p*= 1+((70-DB.temp)*0.001);
+ // lie
+ if(S.lie==="rough")p+=5;
+ if(S.lie==="sand")p+=8;
+ var drift=0;
+ if(S.wdir==="lr"||S.wdir==="rl")drift=Math.round(S.wind*f*0.8);
+ return {raw:d,plays:Math.round(p),drift:drift};
+}
+function pickClub(target){
+ var cl=clubList(),pick=null,under=null;
+ for(var i=cl.length-1;i>=0;i--){ if(cl[i][1]>=target){pick=cl[i];break} }
+ for(var i=0;i<cl.length;i++){ if(cl[i][1]<target){under=cl[i];break} }
+ if(!pick)return{main:cl[0],more:null,less:cl[1]||null,short:true};
+ var idx=cl.indexOf(pick);
+ return {main:pick,more:idx>0?cl[idx-1]:null,less:idx<cl.length-1?cl[idx+1]:null,short:false};
+}
+function advice(r,p){
+ var out=[];
+ if(p.short)out.push("<b>This is more than you have.</b> Lay up to a full wedge number instead of chasing it.");
+ if(S.lie==="rough")out.push("<b>Flyer risk.</b> Land it short of the number and plan for release.");
+ if(S.lie==="sand")out.push("<b>Ball first.</b> One more club, smooth 80 percent swing, no hero.");
+ if(S.pin==="tucked")out.push("<b>Do not short side it.</b> Aim at the fat side of the green. Doubles come from short side chips.");
+ if(r.plays>=175)out.push("Center of the green. This is a two putt zone, take par and move on.");
+ else if(r.plays>=125)out.push("Your scoring gap. Center of green unless the pin sits on the fat side.");
+ else if(r.plays>0)out.push("Green light if there is room. Land it pin high and miss on the fat side.");
+ if(r.drift>0)out.push("Crosswind: start it about <b>"+r.drift+" yards</b> into the wind.");
+ if(S.wdir==="into"&&S.wind>=10)out.push("Into the wind, swing easier with more club. Speed adds spin and balloons it.");
+ return out;
+}
+
+/* ================= SHOT TAB ================= */
+function shotView(){
+ var r=playsLike(),p=r?pickClub(r.plays):null;
+ var h='<div class="wrap"><div class="numbox"><div class="lab">Yards to pin</div>'
+  +'<div class="val">'+(S.yds||"0")+'<span>yd</span></div></div><div class="pad">';
+ [1,2,3,4,5,6,7,8,9].forEach(function(n){h+='<button onclick="dig('+n+')">'+n+'</button>'});
+ h+='<button class="act" onclick="clr()">CLR</button><button onclick="dig(0)">0</button>'
+  +'<button class="act" onclick="del()">DEL</button></div>';
+
+ h+='<div class="tiny" style="margin-top:22px">Wind</div><div class="row">'
+  +chip("none","Calm","wdir")+chip("into","Into","wdir")+chip("down","Down","wdir")
+  +chip("lr","L to R","wdir")+chip("rl","R to L","wdir")+'</div>';
+ if(S.wdir!=="none"){
+  h+='<div class="stepper"><button onclick="bump(\'wind\',-5)">&minus;</button>'
+   +'<div class="v">'+S.wind+' mph<small>wind speed</small></div>'
+   +'<button onclick="bump(\'wind\',5)">+</button></div>';
+ }
+ h+='<div class="tiny" style="margin-top:20px">Elevation</div>'
+  +'<div class="stepper"><button onclick="bump(\'elev\',-5)">&minus;</button>'
+  +'<div class="v">'+(S.elev>0?"+":"")+S.elev+' yd<small>'+(S.elev>0?"uphill":S.elev<0?"downhill":"flat")+'</small></div>'
+  +'<button onclick="bump(\'elev\',5)">+</button></div>';
+ h+='<div class="tiny" style="margin-top:20px">Lie</div><div class="row">'
+  +chip("tee","Tee","lie")+chip("fairway","Fairway","lie")+chip("rough","Rough","lie")+chip("sand","Sand","lie")+'</div>';
+ h+='<div class="tiny" style="margin-top:20px">Pin</div><div class="row">'
+  +chip("center","Middle","pin")+chip("tucked","Tucked","pin")+'</div>';
+
+ if(r&&p){
+  h+='<div class="ans"><div class="head"><span class="pl">Plays like</span>'
+   +'<span class="plv">'+r.plays+' yd</span></div><div class="body">'
+   +'<div class="club">'+esc(p.main[0])+'</div>'
+   +'<div class="sub">'+p.main[1]+' yard club '+(p.main[1]-r.plays>=0?'('+(p.main[1]-r.plays)+' to spare)':'')+'</div>'
+   +'<div class="alts">'
+   +(p.more?'<div class="alt"><b>'+esc(p.more[0])+'</b><span>if between clubs</span></div>':'')
+   +(p.less?'<div class="alt"><b>'+esc(p.less[0])+'</b><span>if flushed / downwind</span></div>':'')
+   +'</div>';
+  advice(r,p).forEach(function(t){h+='<div class="note">'+t+'</div>'});
+  h+='</div></div>';
+ } else {
+  h+='<div class="ans"><div class="body muted" style="font-size:17px">Punch in the number and it will tell you the club.</div></div>';
+ }
+ h+='</div>';
+ return h;
+}
+function chip(v,label,key){return '<button class="chip'+(S[key]===v?' on':'')+'" onclick="setK(\''+key+'\',\''+v+'\')">'+label+'</button>'}
+function setK(k,v){S[k]=v;if(k==="wdir"&&v==="none")S.wind=0;if(k==="wdir"&&S.wind===0&&v!=="none")S.wind=10;render()}
+function bump(k,d){S[k]=Math.max(k==="wind"?0:-60,S[k]+d);render()}
+function dig(n){if(S.yds.length<3)S.yds+=String(n);render()}
+function del(){S.yds=S.yds.slice(0,-1);render()}
+function clr(){S.yds="";render()}
+
+/* ================= TEE TAB ================= */
+function teeView(){
+ var cl=clubList(),hole=parseFloat(S.hole),rec=null,rows="";
+ var widthYd={tight:32,normal:44,wide:58}[S.width];
+ if(S.trouble==="both")widthYd-=8; else if(S.trouble!=="none")widthYd-=4;
+ for(var i=0;i<cl.length;i++){
+  var c=cl[i],d=dispOf(c[0]),fits=d<=widthYd;
+  var left=hole?Math.max(0,Math.round(hole-c[1])):null;
+  if(!rec&&fits)rec=c;
+  if(i<5)rows+='<tr><td>'+esc(c[0])+'</td><td>'+c[1]+'</td><td style="color:'+(fits?"#ea0000":"#8a8a8a")+'">'+d+' yd</td>'
+   +'<td>'+(left!==null?left:"—")+'</td></tr>';
+ }
+ if(!rec)rec=cl[cl.length-1];
+ var leaves=hole?Math.max(0,Math.round(hole-rec[1])):null;
+ var h='<div class="wrap"><div class="numbox"><div class="lab">Hole yardage</div>'
+  +'<div class="val">'+(S.hole||"0")+'<span>yd</span></div></div><div class="pad">';
+ [1,2,3,4,5,6,7,8,9].forEach(function(n){h+='<button onclick="tdig('+n+')">'+n+'</button>'});
+ h+='<button class="act" onclick="S.hole=\'\';render()">CLR</button><button onclick="tdig(0)">0</button>'
+  +'<button class="act" onclick="S.hole=S.hole.slice(0,-1);render()">DEL</button></div>';
+ h+='<div class="tiny" style="margin-top:22px">Fairway width</div><div class="row">'
+  +chip("tight","Tight","width")+chip("normal","Normal","width")+chip("wide","Wide","width")+'</div>';
+ h+='<div class="tiny" style="margin-top:20px">Trouble</div><div class="row">'
+  +chip("none","None","trouble")+chip("left","Left","trouble")+chip("right","Right","trouble")+chip("both","Both","trouble")+'</div>';
+ h+='<div class="ans"><div class="head"><span class="pl">'+(leaves!==null?'Leaves':'Off the tee')+'</span>'
+  +'<span class="plv">'+(leaves!==null?leaves+' yd':'')+'</span></div><div class="body">'
+  +'<div class="club">'+esc(rec[0])+'</div>'
+  +'<div class="sub">'+rec[1]+' yards, spread about '+dispOf(rec[0])+' yards'
+  +(leaves!==null?'. Leaves '+leaves+' yards in.':'')+'</div>';
+ var notes=[];
+ if(rec[0]!=="Driver")notes.push("<b>Driver spread is "+dispOf("Driver")+" yards</b> and this fairway plays about "+widthYd+". Hit the one that fits.");
+ if(S.trouble==="left")notes.push("Trouble left. Start it at the right edge and let your pattern work back.");
+ if(S.trouble==="right")notes.push("Trouble right. Start it at the left edge, but do not aim at the hazard and hope.");
+ if(S.trouble==="both")notes.push("Both sides. Take the club that fits the gap, not the one that gets you closest.");
+ if(leaves!==null&&leaves>0&&leaves<=125)notes.push("Leaves "+leaves+", a full wedge number. That is the tee shot.");
+ else if(leaves!==null&&leaves>=125&&leaves<=175)notes.push("Leaves "+leaves+", which is your weak zone. Consider a club that leaves inside 125 or outside 175.");
+ notes.push("275 in the fairway beats 300 in the trees. No hero shots.");
+ notes.forEach(function(t){h+='<div class="note">'+t+'</div>'});
+ h+='<table><tr><th>Club</th><th>Yds</th><th>Spread</th><th>Leaves</th></tr>'+rows+'</table>';
+ h+='</div></div></div>';
+ return h;
+}
+function tdig(n){if(S.hole.length<3)S.hole+=String(n);render()}
+
+/* ================= CLUBS TAB ================= */
+function clubsView(){
+ var h='<div class="wrap"><div class="tiny" style="margin-top:22px">Carry distances. Edit these to match your Uneekor numbers.</div>';
+ DEF.clubs.forEach(function(c){
+  h+='<div class="crow"><span class="n">'+esc(c[0])+'</span>'
+   +'<input type="text" inputmode="decimal" value="'+esc(DB.clubs[c[0]])+'" onchange="setClub(\''+c[0]+'\',this.value)">'
+   +'<span class="u">yd</span></div>';
+ });
+ h+='<div class="stepper" style="margin-top:20px"><button onclick="setTemp(-5)">&minus;</button>'
+  +'<div class="v">'+DB.temp+' &deg;F<small>playing temperature</small></div>'
+  +'<button onclick="setTemp(5)">+</button></div>';
+ h+='<div class="tiny" style="margin-top:26px">Wedge matrix</div><table>'
+  +'<tr><th>Club</th><th>Full</th><th>3/4</th><th>Half</th></tr>';
+ ["PW","GW","SW","LW"].forEach(function(n){
+  var v=parseFloat(DB.clubs[n])||0;
+  h+='<tr><td>'+n+'</td><td>'+Math.round(v)+'</td><td>'+Math.round(v*.85)+'</td><td>'+Math.round(v*.7)+'</td></tr>';
+ });
+ h+='</table><div class="note" style="margin-top:16px">Wedges inside 100 were flagged as one of your two biggest scoring leaks. '
+  +'Know these three numbers per wedge and most of that leak closes.</div>';
+ h+='<button class="chip" style="margin-top:22px;padding:16px" onclick="resetClubs()">Reset to starting numbers</button></div>';
+ return h;
+}
+function setClub(n,v){var f=parseFloat(v);DB.clubs[n]=isNaN(f)?DB.clubs[n]:f;save(DB);render()}
+function setTemp(d){DB.temp=Math.min(115,Math.max(35,DB.temp+d));save(DB);render()}
+function resetClubs(){DEF.clubs.forEach(function(c){DB.clubs[c[0]]=c[1]});DB.temp=90;save(DB);render()}
+
+/* ================= RULES TAB ================= */
+function rulesView(){
+ var h='<div class="wrap"><div class="tiny" style="margin-top:22px">Course management</div><ol>';
+ RULES.forEach(function(r){h+='<li>'+esc(r)+'</li>'});
+ h+='</ol><div class="tiny" style="margin-top:26px">Targets that actually move the handicap</div><div class="kpi">';
+ KPI.forEach(function(k){h+='<div><b>'+esc(k[0])+'</b><span>'+esc(k[1])+'</span></div>'});
+ h+='</div>';
+ h+='<div class="tiny" style="margin-top:26px">Your pattern</div>'
+  +'<div class="note">Driver: good contact <b>276</b>, typical window <b>267 to 287</b>, tee average <b>290</b>, '
+  +'dispersion <b>41 yards</b> over 99 tracked drives. Centered pattern, no big one way miss anymore.</div>'
+  +'<div class="note warn">When the swing gets quick, the handle pulls and the face closes early. That is the left miss. '
+  +'Slow transition, let the hands drop, speed comes late.</div>'
+  +'<div class="note warn">Distance is not the problem. The strokes are in approach play from 125 to 175, '
+  +'wedges inside 100, and the occasional hero shot.</div>';
+ h+='</div>';
+ return h;
+}
+
+/* ================= SHELL ================= */
+function render(){
+ var t=S.tab;
+ var head='<div class="top"><div class="toprow"><h1>Caddie</h1>'
+  +'<div class="r">'+(t==="shot"?"Approach":t==="tee"?"Off the tee":t==="clubs"?"Your numbers":"Strategy")+'</div></div></div>';
+ var body=t==="shot"?shotView():t==="tee"?teeView():t==="clubs"?clubsView():rulesView();
+ var tabs='<div class="tabs"><div class="tabrow">'
+  +tab("shot","Shot")+tab("tee","Tee")+tab("clubs","Clubs")+tab("rules","Rules")+'</div></div>';
+ app.innerHTML=head+body+tabs;
+}
+function tab(k,l){return '<button class="tabb'+(S.tab===k?' on':'')+'" onclick="S.tab=\''+k+'\';render();window.scrollTo(0,0)">'+l+'</button>'}
+render();
+</script>
+</body>
+</html>
