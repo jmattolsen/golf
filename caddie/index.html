@@ -110,6 +110,31 @@ ol{padding-left:20px;line-height:1.7;font-size:16px;color:#d6d6d6}
 .gradeRow .g{flex:0 0 34px;height:34px;border-radius:9px;background:#ea0000;display:flex;align-items:center;
  justify-content:center;font-weight:800;font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif;font-size:18px;color:#fff}
 .tabb{font-size:13px}
+
+.fab{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:35;background:#ea0000;
+ border-radius:999px;padding:14px 20px;display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px;
+ box-shadow:0 10px 30px rgba(0,0,0,.6);text-transform:uppercase;
+ font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif;letter-spacing:.04em}
+.fab:active{background:#ff2020}
+.vwrap{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 20px) 20px 60px;text-align:center;min-height:100vh}
+.vclose{position:absolute;top:calc(env(safe-area-inset-top) + 16px);right:18px;font-size:16px;font-weight:700;color:#8a8a8a}
+.vstate{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#ea0000;font-weight:800;margin-top:26px}
+.vheard{margin-top:14px;font-size:19px;color:#d6d6d6;line-height:1.4}
+.vq{margin-top:16px;font-size:30px;line-height:1.15;font-weight:800;
+ font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif;text-transform:uppercase}
+.vans{margin-top:22px;background:#141414;border:1px solid #262626;border-radius:20px;padding:22px 18px}
+.vplays{font-size:15px;color:#8a8a8a;font-weight:800;letter-spacing:.1em}
+.vclub{font-size:58px;line-height:1;color:#ea0000;font-weight:800;margin-top:6px;
+ font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif;text-transform:uppercase}
+.vtext{margin-top:14px;font-size:17px;color:#d6d6d6;line-height:1.45}
+.verr{margin-top:18px;font-size:16px;color:#ea0000;line-height:1.4}
+.mic{margin:30px auto 0;width:132px;height:132px;border-radius:999px;background:#ea0000;color:#fff;display:flex;
+ align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(234,0,0,.35)}
+.mic.live{animation:pulse 1.1s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(234,0,0,.55)}70%{box-shadow:0 0 0 26px rgba(234,0,0,0)}100%{box-shadow:0 0 0 0 rgba(234,0,0,0)}}
+.vhint{margin-top:26px;font-size:15px;color:#8a8a8a;line-height:1.7}
+.vdone{margin-top:24px;width:100%;padding:18px;border-radius:16px;background:#141414;border:1px solid #333333;
+ font-size:17px;font-weight:800;text-transform:uppercase;font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif}
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(10,10,10,.97);backdrop-filter:blur(12px);
  border-top:1px solid #262626;padding:8px 12px calc(env(safe-area-inset-bottom) + 8px)}
 .tabrow{max-width:560px;margin:0 auto;display:flex;gap:8px}
@@ -175,7 +200,7 @@ var LIES=[
   swing:["Pick it clean, shallow, brush the ground.","Rotate the body through. Do not use the hands to lift it."],
   expect:"Lower launch, comes out hot, minimal spin. Near the green, putting or a bump and run is usually the higher percentage play."},
 
- {id:"fwbunker",n:"Fairway Bunker",grade:"B",adj:1.08,aim:0,
+ {id:"fwbunker",n:"Fairway Bunker",grade:"B",adj:1.08,aim:0,cap:"5 Wood",
   read:"Check the LIP first, then the lie. If the lip eats the club you need, this is a layup, not a decision.",
   setup:["Feet barely dug in, just enough to be stable.","Choke down half an inch to offset sinking in.","Ball center. Weight even. One to two more clubs."],
   swing:["Quiet lower body, 80 percent speed.","Ball first, sand after. Keep your height, do not drop into it."],
@@ -539,15 +564,231 @@ function rulesView(){
  return h;
 }
 
+/* ================= VOICE ================= */
+var V={on:false,state:"idle",heard:"",say:"",rec:null,supported:false,err:"",asked:null,answer:null};
+try{V.supported=!!(window.SpeechRecognition||window.webkitSpeechRecognition)}catch(e){V.supported=false}
+var canSpeak=(typeof window.speechSynthesis!=="undefined");
+
+var W2N={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,
+ thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20,thirty:30,
+ forty:40,fourty:40,fifty:50,sixty:60,seventy:70,eighty:80,ninety:90,hundred:100,a:1};
+function numbersIn(t){
+ var out=[],raw=t.match(/\d+/g);
+ if(raw)raw.forEach(function(x){out.push(parseInt(x,10))});
+ var w=t.toLowerCase().replace(/[^a-z ]/g," ").split(/\s+/),seq=[],res=[];
+ function flush(){
+  if(!seq.length)return;
+  var v=0;
+  if(seq.length===1)v=seq[0];
+  else if(seq[0]<10&&seq[1]>=10){v=seq[0]*100+seq[1]+((seq[2]&&seq[2]<10)?seq[2]:0)}
+  else if(seq.indexOf(100)>=0){var i=seq.indexOf(100);v=(seq[0]===100?1:seq[0])*100;
+   for(var k=i+1;k<seq.length;k++)v+=seq[k];}
+  else{v=seq.reduce(function(a,b){return a+b},0)}
+  res.push(v);seq=[];
+ }
+ w.forEach(function(x){ if(W2N[x]!==undefined&&!(x==="a")){seq.push(W2N[x])} else flush(); });
+ flush();
+ return out.concat(res);
+}
+var LIEWORDS=[
+ ["deeprough",["deep rough","thick rough","heavy rough","buried in the rough","long grass","junk","down in it","cabbage"]],
+ ["lightrough",["light rough","first cut","sitting up","fluffy","short rough","rough"]],
+ ["fwbunker",["fairway bunker","fairway trap"]],
+ ["plugged",["plugged","fried egg","buried in the bunker","buried lie"]],
+ ["wetsand",["wet sand","packed sand","hard sand","firm sand"]],
+ ["sand",["bunker","sand","trap","beach"]],
+ ["divot",["divot","sandy divot"]],
+ ["hardpan",["hardpan","hard pan","bare","dirt","no grass"]],
+ ["straw",["pine straw","straw","needles","leaves"]],
+ ["wet",["mud","muddy","wet grass","casual water","standing water","soaked"]],
+ ["collar",["collar","fringe","against the collar"]],
+ ["trees",["trees","punch","punch out","behind a tree","in the woods","chip out"]],
+ ["tee",["tee box","on a tee","teed up","the tee"]],
+ ["fairway",["fairway","short grass","perfect lie","clean lie","good lie"]]
+];
+var SLOPEWORDS=[
+ ["above",["above my feet","above the feet","above me","ball above"]],
+ ["below",["below my feet","below the feet","below me","ball below"]],
+ ["uphill",["uphill lie","up hill lie","uphill","upslope","up slope"]],
+ ["downhill",["downhill lie","downhill","downslope","down slope"]]
+];
+function parseShot(t){
+ var s=" "+t.toLowerCase()+" ",got={};
+ // wind direction
+ if(/(into|in my face|hurting|against me|against the wind|in off)/.test(s))got.wdir="into";
+ else if(/(down ?wind|helping|at my back|behind me|with the wind)/.test(s))got.wdir="down";
+ else if(/(left to right|off the left|from the left)/.test(s))got.wdir="lr";
+ else if(/(right to left|off the right|from the right)/.test(s))got.wdir="rl";
+ else if(/(no wind|calm|dead calm|still)/.test(s))got.wdir="none";
+ // lie
+ for(var i=0;i<LIEWORDS.length;i++){var L=LIEWORDS[i];
+  for(var k=0;k<L[1].length;k++){if(s.indexOf(" "+L[1][k])>=0||s.indexOf(L[1][k])>=0){got.lie=L[0];break}}
+  if(got.lie)break}
+ // slope
+ for(var i=0;i<SLOPEWORDS.length;i++){var L=SLOPEWORDS[i];
+  for(var k=0;k<L[1].length;k++){if(s.indexOf(L[1][k])>=0){got.slope=L[0];break}}
+  if(got.slope)break}
+ if(/(flat lie|flat|level)/.test(s)&&!got.slope)got.slope="flat";
+ // pin
+ if(/(tucked|short side|sucker pin|tight pin|on the edge)/.test(s))got.pin="tucked";
+ else if(/(middle|center of the green|centre)/.test(s))got.pin="center";
+ // numbers
+ var n=numbersIn(t);
+ var yards=null,wind=null;
+ n.forEach(function(v){
+  if(yards===null&&v>=25&&v<=350){yards=v;return}
+  if(wind===null&&v>=1&&v<=45)wind=v;
+ });
+ if(yards!==null)got.yds=yards;
+ if(wind!==null)got.wind=wind;
+ return got;
+}
+function applyHeard(t){
+ var g=parseShot(t),used=[];
+ if(g.yds){S.yds=String(g.yds);used.push(g.yds+" yards")}
+ if(g.lie){S.lie=g.lie;used.push(lieOf(g.lie).n)}
+ if(g.slope){S.slope=g.slope;used.push(slopeOf(g.slope).n)}
+ if(g.wdir){S.wdir=g.wdir;if(g.wdir==="none")S.wind=0;else if(!S.wind)S.wind=10;used.push(g.wdir==="none"?"calm":"wind "+g.wdir)}
+ if(g.wind&&S.wdir!=="none"){S.wind=g.wind}
+ if(g.pin){S.pin=g.pin}
+ return used;
+}
+function spokenAnswer(){
+ var r=playsLike();if(!r)return null;
+ var p=applyLie(pickClub(r.plays),r.lie,r.plays);
+ var line=r.plays+" yards. "+p.main[0]+".";
+ if(p.forced)line+=" Technique shot. Splash it to the middle.";
+ else if(p.capped)line+=" That is all this lie gives you. Advance it.";
+ else if(r.lie.id==="lightrough")line+=" Flyer lie, land it short.";
+ else if(r.lie.grade==="C")line+=" C lie. Advance it, the green is a bonus.";
+ else if(r.plays>=175)line+=" Center of the green, take your two putts.";
+ else if(r.plays>=125)line+=" Middle of the green unless the pin is on the fat side.";
+ else line+=" Green light if there is room, land it pin high.";
+ if(r.slopeAim>0)line+=" Aim about "+r.slopeAim+" yards "+r.slopeDir+".";
+ if(r.drift>0)line+=" Start it "+r.drift+" yards into the wind.";
+ return {text:line,plays:r.plays,club:p.main[0],p:p,r:r};
+}
+function speak(t,then){
+ V.say=t;
+ if(!canSpeak){if(then)then();return}
+ try{
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(t);
+  u.rate=1.02;u.pitch=1;u.lang="en-US";
+  u.onend=function(){if(then)then()};
+  u.onerror=function(){if(then)then()};
+  window.speechSynthesis.speak(u);
+ }catch(e){if(then)then()}
+}
+function missingBit(){
+ if(!S.yds)return {q:"How far?",k:"yds"};
+ if(!V.asked||V.asked.indexOf("lie")<0){if(!V.gotLie)return {q:"What is the lie?",k:"lie"}}
+ if(!V.gotWind)return {q:"Wind?",k:"wind"};
+ return null;
+}
+function listen(){
+ if(!V.supported){V.state="nomic";V.err="This browser will not listen. Open the site in Safari, or use the buttons.";render();return}
+ try{
+  var R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  var rec=new R();
+  V.rec=rec;rec.lang="en-US";rec.interimResults=false;rec.maxAlternatives=1;rec.continuous=false;
+  rec.onstart=function(){V.state="listening";V.err="";render()};
+  rec.onerror=function(e){
+   V.state="idle";
+   V.err=(e.error==="not-allowed"||e.error==="service-not-allowed")
+    ?"Mic blocked. Open the site in Safari and allow the microphone."
+    :(e.error==="no-speech"?"Did not hear anything. Tap and try again.":"Voice error: "+e.error);
+   render();
+  };
+  rec.onresult=function(e){
+   var t=e.results[0][0].transcript;
+   V.heard=t;V.state="thinking";render();
+   handleHeard(t);
+  };
+  rec.onend=function(){if(V.state==="listening"){V.state="idle";render()}};
+  rec.start();
+ }catch(e){V.state="idle";V.err="Could not start the mic.";render()}
+}
+function handleHeard(t){
+ var s=t.toLowerCase();
+ if(/(start over|reset|new shot|clear)/.test(s)){S.yds="";S.wdir="none";S.wind=0;S.lie="fairway";S.slope="flat";S.pin="center";
+  V.gotLie=false;V.gotWind=false;V.lieAsks=0;V.answer=null;ask("New shot. How far?");return}
+ if(/(repeat|say it again|again)/.test(s)&&V.answer){speak(V.answer.text,function(){V.state="idle";render()});return}
+ var before={y:S.yds};
+ var used=applyHeard(t);
+ var g=parseShot(t);
+ if(g.lie)V.gotLie=true;
+ else if(g.slope)V.gotLie=true;
+ if(/(good|clean|fine|normal|decent|nothing|no issue|flat)/.test(s)&&!g.lie)V.gotLie=true;
+ if(g.wdir!==undefined)V.gotWind=true;
+ if(g.wind)V.gotWind=true;
+ if(!S.yds){ask("I did not catch a number. How far is it?");return}
+ if(!V.gotLie){
+  if(V.lieAsks){V.gotLie=true}
+  else{V.lieAsks=1;ask("What is the lie?");return}
+ }
+ if(!V.gotWind){ask("Wind?");return}
+ var a=spokenAnswer();
+ V.answer=a;V.state="answer";render();
+ speak(a.text,function(){V.state="answer";render()});
+}
+function ask(q){
+ V.state="asking";V.q=q;render();
+ speak(q,function(){listen()});
+}
+function startVoice(){
+ V.on=true;V.heard="";V.err="";V.answer=null;V.gotLie=false;V.gotWind=false;
+ S.yds="";S.wdir="none";S.wind=0;S.lie="fairway";S.slope="flat";S.pin="center";
+ render();
+ speak("Caddie ready. Give me the shot.",function(){listen()});
+}
+function stopVoice(){
+ V.on=false;V.state="idle";
+ try{if(V.rec)V.rec.abort()}catch(e){}
+ try{window.speechSynthesis.cancel()}catch(e){}
+ render();
+}
+function voiceView(){
+ var st=V.state;
+ var h='<div class="vwrap">';
+ h+='<button class="vclose" onclick="stopVoice()">Close</button>';
+ h+='<div class="vstate">'+(st==="listening"?"Listening":st==="thinking"?"Thinking":st==="asking"?"Speaking":st==="answer"?"Here it is":"Tap to talk")+'</div>';
+ if(V.heard)h+='<div class="vheard">&ldquo;'+esc(V.heard)+'&rdquo;</div>';
+ if(!V.answer)h+='<div class="vq">'+esc(V.q||"Say the number, the lie, and the wind")+'</div>';
+ if(V.answer){
+  h+='<div class="vans"><div class="vplays">'+V.answer.plays+' yd</div>'
+   +'<div class="vclub">'+esc(V.answer.club)+'</div>'
+   +'<div class="vtext">'+esc(V.answer.text)+'</div></div>';
+ }
+ if(V.err)h+='<div class="verr">'+esc(V.err)+'</div>';
+ h+='<button class="mic'+(st==="listening"?" live":"")+'" onclick="listen()">'
+  +'<svg viewBox="0 0 24 24" width="52" height="52" fill="currentColor">'
+  +'<path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>'
+  +'<path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V21h-2a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-3.08A7 7 0 0 0 19 11z"/>'
+  +'</svg></button>';
+ h+='<div class="vhint">Say it however you want:<br>&ldquo;165, light rough, 10 into&rdquo;<br>'
+  +'&ldquo;A hundred forty, ball above my feet, calm&rdquo;<br>&ldquo;Two ten from the fairway bunker&rdquo;<br><br>'
+  +'Say <b>repeat</b> to hear it again, <b>start over</b> for a new shot.</div>';
+ if(V.answer)h+='<button class="vdone" onclick="stopVoice()">Use these numbers</button>';
+ h+='</div>';
+ return h;
+}
+
 /* ================= SHELL ================= */
 function render(){
+ if(V.on){app.innerHTML=voiceView();return}
  var t=S.tab;
  var head='<div class="top"><div class="toprow"><h1>Caddie</h1>'
   +'<div class="r">'+(t==="shot"?"Approach":t==="tee"?"Off the tee":t==="lie"?"Read and play it":t==="clubs"?"Your numbers":"Strategy")+'</div></div></div>';
  var body=t==="shot"?shotView():t==="tee"?teeView():t==="lie"?lieView():t==="clubs"?clubsView():rulesView();
+ var fab=(t==="shot")?'<button class="fab" onclick="startVoice()">'
+  +'<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">'
+  +'<path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>'
+  +'<path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V21h-2a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-3.08A7 7 0 0 0 19 11z"/>'
+  +'</svg><span>Talk to it</span></button>':'';
  var tabs='<div class="tabs"><div class="tabrow">'
   +tab("shot","Shot")+tab("tee","Tee")+tab("lie","Lie")+tab("clubs","Clubs")+tab("rules","Rules")+'</div></div>';
- app.innerHTML=head+body+tabs;
+ app.innerHTML=head+body+fab+tabs;
 }
 function tab(k,l){return '<button class="tabb'+(S.tab===k?' on':'')+'" onclick="S.tab=\''+k+'\';render();window.scrollTo(0,0)">'+l+'</button>'}
 render();
