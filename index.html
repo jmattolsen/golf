@@ -224,6 +224,29 @@ var KEY="ogt-v3",mem={};
 function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return mem}}
 function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){mem=o}}
 var DB=load(); if(!DB.weights)DB.weights={}; if(!DB.history)DB.history={};
+function saveLive(){
+ try{
+  if(!S.sess){DB.live=null;save(DB);return}
+  DB.live={day:S.day,readiness:S.readiness,all:S.all,bmap:S.bmap,bi:S.bi,round:S.round,pos:S.pos,
+   view:(S.view==="run"||S.view==="day")?S.view:"day",date:todayStr(),at:new Date().getTime()};
+  save(DB);
+ }catch(e){}
+}
+function liveSets(){
+ var n=0;try{for(var id in DB.live.all){var ss=DB.live.all[id].sets;
+  for(var k in ss){var a=ss[k];for(var i=0;i<a.length;i++)if(a[i])n++}}}catch(e){}
+ return n;
+}
+function resumeLive(){
+ var L=DB.live;if(!L)return;
+ S.all=L.all||{};S.bmap=L.bmap||{};S.day=L.day||0;S.readiness=L.readiness||"GREEN";
+ var id=PROGRAM[S.day].id;
+ S.sess=S.all[id]||{sets:{},w:{},rpe:{},note:{},started:new Date().getTime()};
+ S.blocks=S.bmap[id]||JSON.parse(JSON.stringify(PROGRAM[S.day].blocks));
+ S.bi=L.bi||0;S.round=L.round||0;S.pos=L.pos||0;
+ if(L.view==="run"){S.view="run";render()}else{dayView()}
+}
+function dropLive(){DB.live=null;save(DB);S.sess=null;S.all={};S.bmap={};home()}
 
 /* ==================== AUDIO ==================== */
 var actx=null;
@@ -254,6 +277,12 @@ function home(){
  stopTimer();S.view="home";
  var h='<div class="wrap"><div class="hero"><div class="tiny">Olsen Golf Performance</div>'
   +'<h1>Power Development</h1><p>Rotation blocks. Two or three lifts, minimal rest, get out.</p></div>'
+  +((DB.live&&DB.live.all)?('<button class="card" style="border-color:#ea0000" onclick="resumeLive()">'
+   +'<div class="icon">&#9654;</div><div><h2>Resume Day '+(DB.live.day+1)+'</h2>'
+   +'<div class="sub">'+liveSets()+' sets logged &middot; started '+esc(DB.live.date)
+   +'. Picks up exactly where you stopped.</div></div><div class="chev">&rsaquo;</div></button>'
+   +'<button class="card" style="padding:12px 20px" onclick="dropLive()"><div class="sub" style="width:100%;text-align:center">'
+   +'Clear it and start fresh</div></button><div style="height:8px"></div>'):'')
   +'<button class="card" onclick="openWarmup(true)"><div class="icon" style="color:#ea0000;border-color:#ea0000">&#9650;</div>'
   +'<div><h2>Golf Warm Up<span class="badge warm">7 min</span></h2>'
   +'<div class="sub">Hips, spine, shoulders, then ramp-up swings. Do not skip it.</div></div>'
@@ -342,9 +371,9 @@ function dayView(){
    +(done?'Repeat block '+b.n:'Start block '+b.n)+'</button></div>';
  });
  h+='</div><div class="nav"><div class="navrow">'
-  +'<button class="nbtn" onclick="home()">Leave</button>'
+  +'<button class="nbtn" onclick="home()">Leave<small style="display:block;font-size:11px;font-weight:600;color:#8a8a8a">progress saved</small></button>'
   +'<button class="nbtn primary" onclick="S.view=\'summary\';summary()">Finish workout</button></div></div>';
- app.innerHTML=h;window.scrollTo(0,0);
+ app.innerHTML=h;window.scrollTo(0,0);saveLive();
 }
 function openSwap(bi,p){
  var d=D(),inBlock={};S.blocks[bi].ex.forEach(function(i,pp){if(pp!==p)inBlock[i]=true});
@@ -364,6 +393,7 @@ function doSwap(bi,p,i){S.blocks[bi].ex[p]=i;dayView()}
 function activeIn(b,round){var a=[];b.ex.forEach(function(i,p){if(setsFor(i)>round)a.push(p)});return a}
 function runBlock(bi){
  S.bi=bi;var b=S.blocks[bi];
+ if(blockDone(b)){b.ex.forEach(function(i){S.sess.sets[i]=[]})}
  var r=0;while(r<rounds(b)&&activeIn(b,r).every(function(p){return(S.sess.sets[b.ex[p]]||[])[r]}))r++;
  if(r>=rounds(b))r=0;
  S.round=r;var act=activeIn(b,r);
@@ -428,12 +458,12 @@ function render(){
  [6,7,8,9,10].forEach(function(v){h+='<button class="chip'+(S.sess.rpe[i]===v?' on':'')+'" onclick="setRpe('+v+')">'+v+'</button>'});
  h+='</div></div>';
  h+='<div class="section"><div class="tiny">Note</div><textarea placeholder="Anything worth remembering" '
-  +'oninput="S.sess.note['+i+']=this.value">'+esc(S.sess.note[i]||'')+'</textarea></div></div>';
+  +'oninput="S.sess.note['+i+']=this.value;saveLive()">'+esc(S.sess.note[i]||'')+'</textarea></div></div>';
  var lab=nx?(nx.rest?'Round '+(nx.round+1)+': '+EX(b.ex[nx.pos]).n:'Next: '+EX(b.ex[nx.pos]).n):'Block complete';
  h+='<div class="nav"><div class="navrow">'
   +'<button class="nbtn" onclick="dayView()">Blocks</button>'
   +'<button class="nbtn primary" onclick="doneSet()">Set done<small>'+esc(lab)+'</small></button></div></div>';
- app.innerHTML=h;window.scrollTo(0,0);drawTimer();
+ app.innerHTML=h;window.scrollTo(0,0);drawTimer();saveLive();
 }
 function bump(dv){var b=S.blocks[S.bi],i=b.ex[S.pos],k=EX(i).n,v=parseFloat(wOf(i));
  if(isNaN(v))v=0;S.sess.w[k]=Math.max(0,v+dv);DB.weights[k]=S.sess.w[k];save(DB);render()}
@@ -536,7 +566,7 @@ function summary(){
  });
  var mins=Math.max(1,Math.round((Date.now()-S.sess.started)/60000));
  for(var k in S.sess.w)DB.weights[k]=S.sess.w[k];
- DB.history[d.id]=todayStr();save(DB);
+ DB.history[d.id]=todayStr();DB.live=null;save(DB);
  window.__txt="Day "+(S.day+1)+" "+d.title+", "+todayStr()+", "+mins+" min, "+S.readiness+"\n"+lines.join("\n");
  app.innerHTML='<div class="top"><div class="toprow"><button class="back" onclick="dayView()">&lsaquo; Back</button>'
   +'<div class="t">SESSION COMPLETE</div><div class="count"></div></div></div><div class="wrap">'
