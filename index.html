@@ -202,7 +202,26 @@ var PROGRAM=[
   {n:"90/90 Hip Flow",s:2,r:"5 / side",tempo:"Flow",w:0,wu:"bodyweight",cue:"Move slowly."},
   {n:"Walk / Easy Circuit",s:1,r:"10 min",tempo:"Easy",w:0,wu:"easy",cue:"Nasal breathing pace."}
  ],
- blocks:[{n:"A",tag:"Speed",rest:45,ex:[0,1]},{n:"B",tag:"Recovery",rest:30,ex:[2,3,4]},{n:"C",tag:"Easy",rest:0,ex:[5]}]}
+ blocks:[{n:"A",tag:"Speed",rest:45,ex:[0,1]},{n:"B",tag:"Recovery",rest:30,ex:[2,3,4]},{n:"C",tag:"Easy",rest:0,ex:[5]}]},
+{id:"d5",title:"Mobility + Recovery",time:"25 to 30 min",
+ ex:[
+  {n:"90/90 Hip Switches",s:2,r:"8 / side",tempo:"Slow",w:0,wu:"bodyweight",cue:"Sit tall, switch side to side. Hands off the floor if you can."},
+  {n:"Half-Kneeling Hip Flexor",s:2,r:"45 sec / side",tempo:"Hold",w:0,wu:"bodyweight",cue:"Tuck the pelvis under first, then reach over the top. No arching."},
+  {n:"Adductor Rock Back",s:2,r:"10 / side",tempo:"Slow",w:0,wu:"bodyweight",cue:"Long leg straight, flat back, rock the hips back until it bites."},
+  {n:"Figure 4 Hip Stretch",s:2,r:"45 sec / side",tempo:"Hold",w:0,wu:"bodyweight",cue:"Ankle over the knee, chest tall, breathe into the back of the hip."},
+  {n:"Open Book Rotation",s:2,r:"8 / side",tempo:"Slow",w:0,wu:"bodyweight",cue:"Side lying, knees stacked and quiet. Follow the top hand with your eyes."},
+  {n:"Quadruped T-Spine Rotation",s:2,r:"8 / side",tempo:"Slow",w:0,wu:"bodyweight",cue:"Hand behind the head, hips locked. Turn from the mid back, not the low back."},
+  {n:"Cat / Camel",s:2,r:"8",tempo:"Flow",w:0,wu:"bodyweight",cue:"Move segment by segment. Breathe out at the top of the round."},
+  {n:"Seated Trunk Rotation",s:2,r:"10 / side",tempo:"Slow",w:0,wu:"club across shoulders",cue:"Knees pinned, lower body quiet. Turn against it and feel the mid back work."},
+  {n:"Shoulder Pass-Throughs",s:2,r:"10",tempo:"Slow",w:0,wu:"club or band",cue:"Wide grip, slow, no shrugging. Narrow the grip only if it stays smooth."},
+  {n:"Wall Angels",s:2,r:"10",tempo:"Slow",w:0,wu:"bodyweight",cue:"Low back flat to the wall, wrists stay in contact. Small range done right beats big and sloppy."},
+  {n:"Standing Hamstring Sweep",s:2,r:"10 / side",tempo:"Slow",w:0,wu:"bodyweight",cue:"Flat back hinge, sweep the toe up. Back stays long the whole time."},
+  {n:"Ankle Wall Dorsiflexion",s:2,r:"10 / side",tempo:"Slow",w:0,wu:"bodyweight",cue:"Knee tracks over the toe, heel glued down. This is where the downswing gets its ground."},
+  {n:"Deep Squat Hold",s:1,r:"60 sec",tempo:"Hold",w:0,wu:"bodyweight",cue:"Sit in the bottom, elbows pry the knees out, chest up. Breathe."},
+  {n:"Breathing Reset",s:1,r:"2 min",tempo:"Easy",w:0,wu:"feet up on a bench",cue:"Five seconds in through the nose, seven out. Ribs down. This is the part that resets the nervous system."}
+ ],
+ blocks:[{n:"A",tag:"Hips",rest:20,ex:[0,1,2,3]},{n:"B",tag:"Spine and ribs",rest:20,ex:[4,5,6,7]},
+         {n:"C",tag:"Shoulders, hams, ankles",rest:20,ex:[8,9,10,11]},{n:"D",tag:"Finish",rest:0,ex:[12,13]}]}
 ];
 
 var WARMUP=[
@@ -290,7 +309,7 @@ function home(){
  PROGRAM.forEach(function(d,i){
   var last=DB.history[d.id];
   h+='<button class="card" onclick="startDay('+i+')"><div class="icon">'+(i+1)+'</div><div style="min-width:0">'
-   +'<h2>'+esc(d.title)+(d.id==="d4"?'<span class="badge">optional</span>':'')+'</h2>'
+   +'<h2>'+esc(d.title)+(d.id==="d4"?'<span class="badge">optional</span>':'')+(d.id==="d5"?'<span class="badge warm">any day</span>':'')+'</h2>'
    +'<div class="sub">'+d.blocks.length+' blocks &middot; '+d.ex.length+' exercises &middot; '+d.time
    +(last?' &middot; last '+esc(last):'')+'</div></div><div class="chev">&rsaquo;</div></button>';
  });
@@ -311,11 +330,11 @@ function startDay(i){
   +'<p>Neck, back and hips. This sets today\'s volume.</p>'
   +'<button class="rbtn g" onclick="go(\'GREEN\')">Good to go<span>Full rounds as written</span></button>'
   +'<button class="rbtn y" onclick="go(\'YELLOW\')">A little stiff<span>Cut volume 25 percent, keep reps smooth</span></button>'
-  +'<button class="rbtn r" onclick="go(\'RED\')">Rough<span>Mobility only, switch to Day 4</span></button>'
+  +'<button class="rbtn r" onclick="go(\'RED\')">Rough<span>Mobility only, switch to the mobility day</span></button>'
   +'<button class="rbtn" style="text-align:center;margin-bottom:0" onclick="home()">Cancel</button></div></div>';
 }
 function go(r){
- S.readiness=r; if(r==="RED")S.day=3;
+ S.readiness=r; if(r==="RED")S.day=4;
  openDay(S.day);
 }
 function openDay(i){
@@ -349,7 +368,7 @@ function dayView(){
   +'<button class="t sw" onclick="openDayPicker()">DAY '+(S.day+1)+' &middot; '+esc(d.title).toUpperCase()+' &#9662;</button>'
   +'<div class="count">'+got+' / '+tot+'</div></div><div class="bar"><i style="width:'+(tot?got/tot*100:0)+'%"></i></div></div>'
   +'<div class="wrap">';
- if(!DB.warmToday||DB.warmToday!==todayStr()){
+ if(d.id!=="d5"&&(!DB.warmToday||DB.warmToday!==todayStr())){
   h+='<button class="card" style="margin-top:18px" onclick="openWarmup(false)">'
    +'<div class="icon" style="color:#ea0000;border-color:#ea0000">&#9650;</div><div><h2>Warm up first</h2>'
    +'<div class="sub">7 min dynamic routine. Skip it and the first block is your warm up, which is slower.</div></div>'
@@ -360,7 +379,7 @@ function dayView(){
   var done=blockDone(b),R=rounds(b);
   h+='<div class="block'+(done?' done':'')+'" style="margin-top:14px"><div class="bhead">'
    +'<h3>Block '+b.n+'</h3><span class="muted" style="font-size:15px">'+esc(b.tag)+'</span>'
-   +'<span class="meta">'+R+' rounds &middot; '+(b.rest?b.rest+' sec between':'no timer')+'</span></div>';
+   +'<span class="meta">'+R+(R===1?' round':' rounds')+' &middot; '+(b.rest?b.rest+' sec between':'no timer')+'</span></div>';
   b.ex.forEach(function(i,p){
    var e=EX(i),ds=doneSets(i),ns=setsFor(i);
    h+='<div class="brow"><span style="color:'+(ds>=ns?'#ea0000':'#ffffff')+'">'+(ds>=ns?'&#10003; ':'')+esc(e.n)+'</span>'
