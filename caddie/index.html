@@ -132,6 +132,12 @@ ol{padding-left:20px;line-height:1.7;font-size:16px;color:#d6d6d6}
  align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(234,0,0,.35)}
 .mic.live{animation:pulse 1.1s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(234,0,0,.55)}70%{box-shadow:0 0 0 26px rgba(234,0,0,0)}100%{box-shadow:0 0 0 0 rgba(234,0,0,0)}}
+.vbrow{display:flex;gap:10px;margin-top:22px}
+.vinput{flex:1;background:#141414;border:1px solid #333333;border-radius:14px;color:#fff;font-size:18px;
+ padding:16px 14px;min-width:0}
+.vinput::placeholder{color:#6a6a6a}
+.vgo{flex:0 0 84px;background:#ea0000;border-radius:14px;font-size:17px;font-weight:800;text-transform:uppercase;
+ font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif}
 .vhint{margin-top:26px;font-size:15px;color:#8a8a8a;line-height:1.7}
 .vdone{margin-top:24px;width:100%;padding:18px;border-radius:16px;background:#141414;border:1px solid #333333;
  font-size:17px;font-weight:800;text-transform:uppercase;font-family:"Avenir Next Condensed","Helvetica Neue",sans-serif}
@@ -669,16 +675,17 @@ function spokenAnswer(){
  return {text:line,plays:r.plays,club:p.main[0],p:p,r:r};
 }
 function speak(t,then){
- V.say=t;
- if(!canSpeak){if(then)then();return}
+ V.say=t;var done=false;
+ function go(){if(done)return;done=true;if(then)then()}
+ setTimeout(go, Math.min(9000, 900+t.length*55));
+ if(!canSpeak){setTimeout(go,0);return}
  try{
   window.speechSynthesis.cancel();
   var u=new SpeechSynthesisUtterance(t);
   u.rate=1.02;u.pitch=1;u.lang="en-US";
-  u.onend=function(){if(then)then()};
-  u.onerror=function(){if(then)then()};
+  u.onend=go;u.onerror=go;
   window.speechSynthesis.speak(u);
- }catch(e){if(then)then()}
+ }catch(e){go()}
 }
 function missingBit(){
  if(!S.yds)return {q:"How far?",k:"yds"};
@@ -687,7 +694,10 @@ function missingBit(){
  return null;
 }
 function listen(){
- if(!V.supported){V.state="nomic";V.err="This browser will not listen. Open the site in Safari, or use the buttons.";render();return}
+ if(!V.supported){
+  V.state="type";
+  V.err="Live listening needs Safari. In this browser, tap the box below and use the microphone key on your keyboard.";
+  render();focusBox();return}
  try{
   var R=window.SpeechRecognition||window.webkitSpeechRecognition;
   var rec=new R();
@@ -695,9 +705,10 @@ function listen(){
   rec.onstart=function(){V.state="listening";V.err="";render()};
   rec.onerror=function(e){
    V.state="idle";
-   V.err=(e.error==="not-allowed"||e.error==="service-not-allowed")
-    ?"Mic blocked. Open the site in Safari and allow the microphone."
-    :(e.error==="no-speech"?"Did not hear anything. Tap and try again.":"Voice error: "+e.error);
+   if(e.error==="not-allowed"||e.error==="service-not-allowed"){
+    V.state="type";V.err="Mic blocked. Allow the microphone, or tap the box below and use the keyboard mic key.";
+    render();focusBox();return}
+   V.err=(e.error==="no-speech"?"Did not hear anything. Tap the mic or type it below.":"Voice error: "+e.error);
    render();
   };
   rec.onresult=function(e){
@@ -732,15 +743,21 @@ function handleHeard(t){
  V.answer=a;V.state="answer";render();
  speak(a.text,function(){V.state="answer";render()});
 }
+function focusBox(){setTimeout(function(){var b=document.getElementById("vbox");if(b)b.focus()},250)}
+function submitBox(){
+ var b=document.getElementById("vbox");if(!b)return;
+ var t=(b.value||"").trim();if(!t)return;
+ b.value="";V.heard=t;V.state="thinking";render();handleHeard(t);
+}
 function ask(q){
  V.state="asking";V.q=q;render();
- speak(q,function(){listen()});
+ speak(q,function(){ if(V.supported){listen()} else {V.state="type";render();focusBox()} });
 }
 function startVoice(){
  V.on=true;V.heard="";V.err="";V.answer=null;V.gotLie=false;V.gotWind=false;
  S.yds="";S.wdir="none";S.wind=0;S.lie="fairway";S.slope="flat";S.pin="center";
  render();
- speak("Caddie ready. Give me the shot.",function(){listen()});
+ speak("Caddie ready. Give me the shot.",function(){ if(V.supported){listen()} else {V.state="type";render();focusBox()} });
 }
 function stopVoice(){
  V.on=false;V.state="idle";
@@ -749,10 +766,11 @@ function stopVoice(){
  render();
 }
 function voiceView(){
- var st=V.state;
+ var st=V.state, live=V.supported;
  var h='<div class="vwrap">';
  h+='<button class="vclose" onclick="stopVoice()">Close</button>';
- h+='<div class="vstate">'+(st==="listening"?"Listening":st==="thinking"?"Thinking":st==="asking"?"Speaking":st==="answer"?"Here it is":"Tap to talk")+'</div>';
+ h+='<div class="vstate">'+(st==="listening"?"Listening":st==="thinking"?"Working it out":st==="asking"?"Speaking":
+   st==="answer"?"Here it is":st==="type"?"Type or dictate":"Tap to talk")+'</div>';
  if(V.heard)h+='<div class="vheard">&ldquo;'+esc(V.heard)+'&rdquo;</div>';
  if(!V.answer)h+='<div class="vq">'+esc(V.q||"Say the number, the lie, and the wind")+'</div>';
  if(V.answer){
@@ -761,19 +779,28 @@ function voiceView(){
    +'<div class="vtext">'+esc(V.answer.text)+'</div></div>';
  }
  if(V.err)h+='<div class="verr">'+esc(V.err)+'</div>';
- h+='<button class="mic'+(st==="listening"?" live":"")+'" onclick="listen()">'
-  +'<svg viewBox="0 0 24 24" width="52" height="52" fill="currentColor">'
-  +'<path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>'
-  +'<path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V21h-2a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-3.08A7 7 0 0 0 19 11z"/>'
-  +'</svg></button>';
- h+='<div class="vhint">Say it however you want:<br>&ldquo;165, light rough, 10 into&rdquo;<br>'
+ if(live){
+  h+='<button class="mic'+(st==="listening"?" live":"")+'" onclick="listen()">'
+   +'<svg viewBox="0 0 24 24" width="52" height="52" fill="currentColor">'
+   +'<path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>'
+   +'<path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V21h-2a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-3.08A7 7 0 0 0 19 11z"/>'
+   +'</svg></button>';
+ }
+ h+='<div class="vbrow">'
+  +'<input id="vbox" class="vinput" type="text" autocomplete="off" autocorrect="off" '
+  +'placeholder="'+(live?"or type it here":"tap here, then the mic key on your keyboard")+'" '
+  +'onkeydown="if(event.key===\'Enter\')submitBox()">'
+  +'<button class="vgo" onclick="submitBox()">Go</button></div>';
+ if(!live)h+='<div class="vhint" style="margin-top:12px">This browser has no live listening. '
+  +'Tap the box, press the <b>microphone key on the keyboard</b>, say the shot, then hit Go. '
+  +'For hands free listening, open this page in <b>Safari</b>.</div>';
+ h+='<div class="vhint">Say or type it however you want:<br>&ldquo;165, light rough, 10 into&rdquo;<br>'
   +'&ldquo;A hundred forty, ball above my feet, calm&rdquo;<br>&ldquo;Two ten from the fairway bunker&rdquo;<br><br>'
-  +'Say <b>repeat</b> to hear it again, <b>start over</b> for a new shot.</div>';
+  +'<b>repeat</b> hears it again, <b>start over</b> begins a new shot.</div>';
  if(V.answer)h+='<button class="vdone" onclick="stopVoice()">Use these numbers</button>';
  h+='</div>';
  return h;
 }
-
 /* ================= SHELL ================= */
 function render(){
  if(V.on){app.innerHTML=voiceView();return}
@@ -785,7 +812,7 @@ function render(){
   +'<svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">'
   +'<path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>'
   +'<path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V21h-2a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2h-2v-3.08A7 7 0 0 0 19 11z"/>'
-  +'</svg><span>Talk to it</span></button>':'';
+  +'</svg><span>Talk / Type</span></button>':'';
  var tabs='<div class="tabs"><div class="tabrow">'
   +tab("shot","Shot")+tab("tee","Tee")+tab("lie","Lie")+tab("clubs","Clubs")+tab("rules","Rules")+'</div></div>';
  app.innerHTML=head+body+fab+tabs;
